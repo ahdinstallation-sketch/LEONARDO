@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AHD Group — Profit Simulator (marketing · discount · installments)</title>
+<style>
+  :root{
+    --bg:#0E0E0E; --panel:#16150F; --panel2:#1C1A13; --line:#2C2A24;
+    --gold:#C9A86A; --cream:#F3EFE6; --mute:#8A8170;
+    --red:#CE7B6B; --green:#74B27F; --blue:#9AA7B5;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,#1a1812,#0E0E0E 60%);
+    color:var(--cream);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:34px 22px 70px}
+  .eyebrow{font-size:11px;letter-spacing:2.4px;text-transform:uppercase;color:var(--gold);margin:0 0 8px}
+  h1{font-family:Georgia,"Times New Roman",serif;font-weight:600;font-size:30px;margin:0 0 6px;color:var(--cream)}
+  h1 b{color:var(--gold)}
+  .lede{color:var(--mute);font-size:14.5px;max-width:820px;margin:0 0 6px}
+  .lede b{color:var(--cream)}
+  .prov{color:#6E665A;font-size:12px;max-width:820px;margin:10px 0 0;border-left:2px solid var(--line);padding-left:12px}
+  .panel{background:linear-gradient(180deg,var(--panel),#121109);border:1px solid var(--line);
+    border-radius:14px;padding:22px;margin-top:22px}
+  .ph{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:var(--gold);margin:0 0 14px}
+  .ctrls{display:grid;grid-template-columns:1fr 1fr;gap:18px 30px}
+  @media(max-width:620px){.ctrls{grid-template-columns:1fr}}
+  .ctrl label{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--mute);margin-bottom:7px}
+  .ctrl label b{color:var(--cream);font-size:16px;font-family:Georgia,serif}
+  .ctrl .hint{font-size:11px;color:#6E665A;margin-top:5px}
+  .srange{position:relative}
+  .srange .ghost{position:absolute;top:2px;transform:translate(-50%,-50%);width:2px;height:13px;
+    background:var(--green);opacity:.65;pointer-events:none;border-radius:2px}
+  .srange .ghost::after{content:'▾';position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+    font-size:9px;color:var(--green);opacity:.85}
+  .vwrap{display:flex;align-items:baseline;gap:9px}
+  .rec{font-size:10px;color:var(--green);opacity:.85;font-family:system-ui,sans-serif;white-space:nowrap;letter-spacing:.2px}
+  .recbtn{margin-top:14px;background:transparent;border:1px solid var(--green);color:var(--green);
+    font-size:11.5px;letter-spacing:.4px;padding:7px 13px;border-radius:8px;cursor:pointer;text-transform:uppercase}
+  .recbtn:hover{background:rgba(122,168,116,.12)}
+  input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:4px;background:#2C2A24;outline:none;margin:0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--gold);cursor:pointer;border:2px solid #0E0E0E;box-shadow:0 0 0 1px var(--gold)}
+  .sec{margin-top:18px;padding-top:16px;border-top:1px dashed var(--line)}
+  .sec .ctrls{grid-template-columns:1fr 1fr}
+  @media(max-width:620px){.sec .ctrls{grid-template-columns:1fr}}
+  /* marketing funnel readout */
+  .funnel{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px}
+  .fstep{flex:1 1 0;min-width:96px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;position:relative}
+  .fstep .ft{font-size:10px;letter-spacing:.4px;text-transform:uppercase;color:var(--mute)}
+  .fstep .fn{font-size:19px;font-family:Georgia,serif;margin-top:3px;color:var(--cream)}
+  .fstep .fs{font-size:10.5px;color:#6E665A;margin-top:2px}
+  .farrow{display:flex;align-items:center;color:#5d564b;font-size:18px}
+  @media(max-width:620px){.farrow{display:none}}
+  .roas{margin-top:12px;font-size:13px;color:var(--mute)}
+  .roas b{color:var(--gold);font-family:Georgia,serif;font-size:17px}
+  /* sticky live-results bar */
+  .topbar{position:sticky;top:0;z-index:50;background:rgba(12,12,11,.93);backdrop-filter:saturate(140%) blur(9px);
+    -webkit-backdrop-filter:saturate(140%) blur(9px);border-bottom:1px solid var(--line);box-shadow:0 6px 22px rgba(0,0,0,.45)}
+  .tbwrap{max-width:960px;margin:0 auto;padding:9px 22px;display:flex;align-items:center;gap:10px 22px;flex-wrap:wrap}
+  .tbItem{display:flex;flex-direction:column;line-height:1.15}
+  .tbItem .tl{font-size:9.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--mute)}
+  .tbItem .tv{font-family:Georgia,serif;font-size:17px;color:var(--cream);margin-top:1px}
+  .tbItem.big{margin-right:auto;padding-right:14px;border-right:1px solid var(--line)}
+  .tbItem.big .tl{color:var(--gold);font-size:10px}
+  .tbItem.big .tv{font-size:28px}
+  .tbItem .sub{font-size:9.5px;color:#6E665A}
+  @media(max-width:620px){
+    .tbwrap{padding:8px 16px;gap:8px 16px}
+    .tbItem.big{margin-right:0;border-right:none;flex:1 0 100%;border-bottom:1px dashed var(--line);padding-bottom:6px;margin-bottom:2px}
+    .tbItem.big .tv{font-size:24px}
+    .tbItem .tv{font-size:15px}
+  }
+  /* two-brand columns */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:620px){.cols{grid-template-columns:1fr}}
+  .brandcol{background:linear-gradient(180deg,var(--panel),#121109);border:1px solid var(--line);border-radius:14px;padding:18px 18px 14px}
+  .bhead{font-family:Georgia,serif;font-size:19px;color:var(--gold);margin:0 0 2px}
+  .bsub{font-size:11px;color:#6E665A;margin:0 0 12px}
+  .row{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-top:1px solid #211F1A}
+  .row:first-of-type{border-top:none}
+  .row span{font-size:12.5px;color:var(--mute)}
+  .row b{font-size:17px;font-family:Georgia,serif;color:var(--cream)}
+  .row.big{margin-top:4px;padding-top:12px;border-top:1px solid var(--line)}
+  .row.big span{font-size:13px;color:var(--cream)}
+  .row.big b{font-size:23px}
+  /* group footer */
+  .gfoot{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:16px}
+  @media(max-width:620px){.gfoot{grid-template-columns:1fr 1fr}}
+  .tile{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:14px 15px}
+  .tile .t{font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--mute)}
+  .tile .n{font-size:23px;font-family:Georgia,serif;margin-top:4px;color:var(--cream)}
+  .tile .s{font-size:11.5px;color:#6E665A;margin-top:3px}
+  .gprofit{text-align:center;padding:18px;border-radius:12px;border:1px solid var(--line);background:var(--panel2)}
+  .gprofit.pos{border-color:#3a5a42;background:linear-gradient(180deg,#13241a,#121109)}
+  .gprofit.neg{border-color:#5a3a36;background:linear-gradient(180deg,#241513,#121109)}
+  .gprofit .t{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mute)}
+  .gprofit .n{font-size:42px;font-family:Georgia,serif;margin:4px 0 0;line-height:1.1}
+  .gprofit .s{font-size:12px;color:#6E665A;margin-top:4px}
+  .pos{color:var(--green)} .neg{color:var(--red)} .blue{color:var(--blue)} .gold{color:var(--gold)}
+  .cap{font-size:12px;color:var(--mute);margin:2px 0 8px}
+  .note{margin-top:20px;background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--gold);
+    border-radius:10px;padding:15px 17px;font-size:13.5px;color:#cfc9bb}
+  .note b{color:var(--cream)}
+  .foot{margin-top:26px;font-size:11.5px;color:#5d564b;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="tbwrap">
+    <div class="tbItem big"><span class="tl">Group profit / month</span><span class="tv" id="tbG">&mdash;</span></div>
+    <div class="tbItem"><span class="tl">Group sales / mo</span><span class="tv" id="tbS">&mdash;</span></div>
+    <div class="tbItem"><span class="tl">Units / mo (total)</span><span class="tv" id="tbVol">&mdash;</span><span class="sub" id="tbVolBd">&nbsp;</span></div>
+    <div class="tbItem"><span class="tl">Group overhead / mo</span><span class="tv" id="tbOH">&mdash;</span></div>
+    <div class="tbItem"><span class="tl">AHD OH / unit</span><span class="tv" id="tbAOHU">&mdash;</span></div>
+    <div class="tbItem"><span class="tl">Designy OH / unit</span><span class="tv" id="tbDOHU">&mdash;</span></div>
+    <div class="tbItem"><span class="tl">AHD COGS %</span><span class="tv" id="tbACOGS">&mdash;</span></div>
+    <div class="tbItem"><span class="tl">Designy COGS %</span><span class="tv" id="tbDCOGS">&mdash;</span></div>
+    <div class="tbItem"><span class="tl">Avg COGS %</span><span class="tv" id="tbAVGCOGS">&mdash;</span></div>
+    <div class="tbItem"><span class="tl">AHD profit</span><span class="tv" id="tbA">&mdash;</span></div>
+    <div class="tbItem"><span class="tl">Designy profit</span><span class="tv" id="tbD">&mdash;</span></div>
+    <div class="tbItem"><span class="tl">Ad spend</span><span class="tv" id="tbSpend">&mdash;</span><span class="sub" id="tbBest">&nbsp;</span></div>
+  </div>
+</div>
+<div class="wrap">
+  <p class="eyebrow">AHD Group · Whole-company simulator</p>
+  <h1>Fix <b>follow-up</b> first &mdash; the path from &minus;283k to <b>+1.6M</b>/mo</h1>
+  <p class="lede"><b>Where we stand:</b> on a cash basis the whole group runs &asymp; <b>&minus;283k/mo</b> (ties to the dashboard&rsquo;s &minus;284k) &mdash;
+    operations roughly break even, but debt service drains the rest. <b>The single biggest lever isn&rsquo;t more ad spend, it&rsquo;s converting the leads you already pay for:</b>
+    lifting <b>lead&rarr;measurement follow-up from 4.67% to 7%</b> alone turns &minus;283k into <b>+465k</b>. Marketing helps too, but with
+    <b>diminishing returns</b> &mdash; there&rsquo;s a sweet spot (&asymp;<b>954k/mo</b>), not a money-printer.
+    <b>Recommended package</b> (the green &starf; markers): spend at the sweet spot, follow-up to 7%, Designy material <b>49&rarr;40%</b>, hold discounts &rarr; &asymp; <b>+1.6M/mo</b>.
+    Hit <b>&starf; Set all to recommended</b> to load it.</p>
+  <p class="prov">Engine: the measured <b>AHD lead-to-contract pipeline</b> (1,072 EGP/lead, 4.67% lead&rarr;measurement, 50% measurement&rarr;contract).
+    Revenue baseline = actual <b>2026 cash-in</b> (&asymp;5.43M AHD/mo), most of it <b>organic</b>; ad spend <i>and</i> follow-up scale the incremental slice.
+    Overhead = <b>group average-expenses budget</b> (~3.9M/mo) on a <b>2025 order-basis</b> split; resale streams (counters, appliances, <b>furniture/chairs</b>) ride on AHD sales.
+    Two honest caveats: <b>AHD discount barely moves profit</b> here (volume doesn&rsquo;t follow price, E&asymp;0), and <b>installments are left at &times;1</b> because the model counts cheques as net-new volume (optimistic). A decision aid, not management accounts.</p>
+
+  <!-- ============ CONTROLS ============ -->
+  <div class="panel">
+    <p class="ph">The dials</p>
+    <div class="ctrls">
+      <div class="ctrl">
+        <label><span>Marketing / ad spend</span><span class="vwrap"><b><span id="vSpend">229,400</span></b><span class="rec" id="rSpend"></span></span></label>
+        <div class="srange"><input id="sSpend" type="range" min="50000" max="1200000" step="200" value="229400"><span class="ghost" id="gSpend"></span></div>
+        <div class="hint">Drives AHD contracts (and lifts Designy). Today &asymp;229,400/mo.</div>
+      </div>
+      <div class="ctrl">
+        <label><span>Installments &mdash; cheques</span><span class="vwrap"><b>&times;<span id="vInst">1.0</span></b><span class="rec" id="rInst"></span></span></label>
+        <div class="srange"><input id="sInst" type="range" min="1" max="4" step="0.5" value="1"><span class="ghost" id="gInst"></span></div>
+        <div class="hint">Up to <b>&times;4</b> volume, both brands. +20% markup, &minus;14% financing, &minus;4% bounce, 0% down.</div>
+      </div>
+      <div class="ctrl">
+        <label><span>Designy discount</span><span class="vwrap"><b><span id="vDdisc">32</span>%</b><span class="rec" id="rDdisc"></span></span></label>
+        <div class="srange"><input id="sDdisc" type="range" min="0" max="50" step="1" value="32"><span class="ghost" id="gDdisc"></span></div>
+        <div class="hint">Designy demand follows price (E&asymp;4.9): discount more, sell more, earn less/unit.</div>
+      </div>
+      <div class="ctrl">
+        <label><span>Designy material (COGS)</span><span class="vwrap"><b><span id="vDcogs">49</span>%</b><span class="rec" id="rDcogs"></span></span></label>
+        <div class="srange"><input id="sDcogs" type="range" min="30" max="60" step="1" value="49"><span class="ghost" id="gDcogs"></span></div>
+        <div class="hint">Designy runs 49%; <b style="color:var(--green)">40%</b> is healthy material &amp; <b>shrinks</b> the loss (~+104k) but won&rsquo;t cure it &mdash; the real drag is <b>overhead/unit (~6,200 on only ~152 modules)</b>. <b>Volume</b> is the cure: lift Designy to ~263 modules (marketing + follow-up) and 40% material flips it <b style="color:var(--green)">positive</b>.</div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="ctrls">
+        <div class="ctrl">
+          <label><span>AHD discount</span><span class="vwrap"><b><span id="vAdisc">27</span>%</b><span class="rec" id="rAdisc"></span></span></label>
+          <div class="srange"><input id="sAdisc" type="range" min="10" max="40" step="1" value="27"><span class="ghost" id="gAdisc"></span></div>
+          <div class="hint">AHD volume does <b>not</b> follow discount (E&asymp;0) &mdash; this only sets margin.</div>
+        </div>
+        <div class="ctrl">
+          <label><span>Lead &rarr; measurement rate</span><span class="vwrap"><b><span id="vMr">4.67</span>%</b><span class="rec" id="rMr"></span></span></label>
+          <div class="srange"><input id="sMr" type="range" min="4.67" max="7" step="0.01" value="4.67"><span class="ghost" id="gMr"></span></div>
+          <div class="hint">The pipeline&rsquo;s biggest lever: fix follow-up, more contracts per lead.</div>
+        </div>
+      </div>
+      <button class="recbtn" id="recBtn" type="button">★ Set all to recommended</button>
+    </div>
+  </div>
+
+  <!-- ============ TWO-BRAND DASHBOARD ============ -->
+  <div class="cols">
+    <div class="brandcol">
+      <div class="bhead">AHD</div>
+      <div class="bsub">Maximalism · Rotto · Bauhaus — premium kitchens & wardrobes (Badr)</div>
+      <div class="row"><span>Volume (modules/mo)</span><b class="blue" id="aVol">&mdash;</b></div>
+      <div class="row"><span>Sales / mo</span><b id="aSales">&mdash;</b></div>
+      <div class="row"><span>Overhead / mo</span><b id="aOH">&mdash;</b></div>
+      <div class="row"><span>Overhead / unit</span><b id="aOHU">&mdash;</b></div>
+      <div class="row big"><span>Profit / mo</span><b id="aProfit">&mdash;</b></div>
+    </div>
+    <div class="brandcol">
+      <div class="bhead">Designy</div>
+      <div class="bsub">Diana · Leonardo · De Niro — entry-level modular</div>
+      <div class="row"><span>Volume (modules/mo)</span><b class="blue" id="dVol">&mdash;</b></div>
+      <div class="row"><span>Sales / mo</span><b id="dSales">&mdash;</b></div>
+      <div class="row"><span>Overhead / mo</span><b id="dOH">&mdash;</b></div>
+      <div class="row"><span>Overhead / unit</span><b id="dOHU">&mdash;</b></div>
+      <div class="row"><span>Break-even volume <span style="color:#6E665A">(at this material)</span></span><b id="dBE">&mdash;</b></div>
+      <div class="row big"><span>Profit / mo</span><b id="dProfit">&mdash;</b></div>
+    </div>
+  </div>
+
+  <!-- ============ ATTACHED REVENUE STREAMS ============ -->
+  <div class="panel">
+    <p class="ph">All revenue streams &mdash; the attached lines move <span class="gold">with AHD sales</span> (historical 2026 ratios)</p>
+    <div class="row"><span>AHD &mdash; kitchens &amp; wardrobes <span style="color:#6E665A">(the driver)</span></span><b id="rsAhd">&mdash;</b></div>
+    <div class="row"><span>Designy &mdash; entry-level modular</span><b id="rsDes">&mdash;</b></div>
+    <div class="row"><span>Countertops / stone <span style="color:#6E665A">(6.6% of AHD)</span></span><b id="rsCounter">&mdash;</b></div>
+    <div class="row"><span>Appliances <span style="color:#6E665A">(5.2% of AHD)</span></span><b id="rsAppl">&mdash;</b></div>
+    <div class="row"><span>Furniture &mdash; chairs, dining &amp; sofas <span style="color:#6E665A">(Korsagy, 6.4% of AHD)</span></span><b id="rsFurn">&mdash;</b></div>
+    <div class="row"><span>Projects / fit-out <span style="color:#6E665A">(1.3% of AHD)</span></span><b id="rsProj">&mdash;</b></div>
+    <div class="row"><span>Caf&eacute; / Esspressonalitea <span style="color:#6E665A">(independent)</span></span><b id="rsCafe">&mdash;</b></div>
+    <div class="row big"><span>All streams total / mo</span><b id="rsTotal">&mdash;</b></div>
+    <p class="cap" style="margin-top:8px">The resale lines are <b>pass-through</b> (material 78&ndash;90% of price) &mdash; they add to <b>sales</b> but almost nothing to <b>profit</b> (their slim margin is already inside group overhead). More AHD kitchens automatically pull more counters, appliances &amp; fit-out.</p>
+  </div>
+
+  <!-- ============ GROUP FOOTER ============ -->
+  <div class="panel">
+    <p class="ph">Whole company &mdash; cash basis (all overhead + financing &amp; debt service)</p>
+    <div class="gfoot">
+      <div class="tile"><div class="t">Total volume</div><div class="n blue" id="gVol">&mdash;</div><div class="s">modules/mo</div></div>
+      <div class="tile"><div class="t">Total sales</div><div class="n" id="gSales">&mdash;</div><div class="s">per month</div></div>
+      <div class="tile"><div class="t">Total cash costs</div><div class="n" id="gOH">&mdash;</div><div class="s">OH + mktg + financing</div></div>
+    </div>
+    <div class="gprofit" id="gpBox">
+      <div class="t">Group profit / month</div>
+      <div class="n" id="gProfit">&mdash;</div>
+      <div class="s" id="gProfitS">&nbsp;</div>
+    </div>
+  </div>
+
+  <!-- ============ CHART ============ -->
+  <div class="panel">
+    <p class="cap">Group profit as you slide <span class="gold">marketing / ad spend</span> &mdash; the dot is where you are now.
+      The line <b>rises then peaks</b> at the <span class="green">best ~spend</span>, then falls: past the sweet spot, each extra EGP of ads costs more than the sales it buys. (All other dials held at their current setting.)</p>
+    <div id="chart"></div>
+  </div>
+
+  <!-- ============ MARKETING FUNNEL (detail) ============ -->
+  <div class="panel">
+    <p class="ph">Marketing funnel — where the ad spend goes</p>
+    <div class="funnel">
+      <div class="fstep"><div class="ft">Ad spend</div><div class="fn" id="fSpend">&mdash;</div><div class="fs">per month</div></div>
+      <div class="farrow">&rarr;</div>
+      <div class="fstep"><div class="ft">Leads</div><div class="fn" id="fLeads">&mdash;</div><div class="fs">@ 1,072/lead</div></div>
+      <div class="farrow">&rarr;</div>
+      <div class="fstep"><div class="ft">Measurements</div><div class="fn" id="fMeas">&mdash;</div><div class="fs" id="fMeasS">@ 4.67%</div></div>
+      <div class="farrow">&rarr;</div>
+      <div class="fstep"><div class="ft">Contracts</div><div class="fn" id="fCon">&mdash;</div><div class="fs">@ 50%</div></div>
+      <div class="farrow">&rarr;</div>
+      <div class="fstep"><div class="ft">AHD sales</div><div class="fn gold" id="fRev">&mdash;</div><div class="fs" id="fRevS">realized</div></div>
+    </div>
+    <p class="roas">Return on ad spend: <b id="fRoas">&mdash;</b> &mdash; every EGP of marketing returns this much in AHD sales (falls as you spend more — diminishing returns)
+      <span id="fCapNote" style="color:#6E665A"></span></p>
+  </div>
+
+  <div class="note" id="note"></div>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<script>
+/* ---------- constants ---------- */
+// Overhead — order basis, marketing REMOVED (it is the ad-spend dial). Fixed = group OH 3,906,599 − marketing 348,861 = 3,557,738.
+var AHD_FIX=2248720, DES_FIX=894284;            // entity fixed shares ex-marketing (3-bucket: direct + Badr factory + corporate)
+// WHOLE-COMPANY overhead (cash-flow budget, ex-tax): the two makers must carry the ENTIRE group OH, because
+// resale & café are pass-through (COGS ~78-90% → near-zero net contribution). Group OH 4,124,604 − marketing
+// 348,861 = 3,775,743 fixed. OTHER_OH = the slice not yet in AHD_FIX/DES_FIX (resale/café direct + corporate).
+var GROUP_OH_FIX=3775743;
+var OTHER_OH=GROUP_OH_FIX-AHD_FIX-DES_FIX;       // = 632,739 — resale/café & residual corporate OH the makers absorb
+// FINANCING & DEBT SERVICE (cash-flow basis): the dashboard shows H1 2026 Cash In 45.23M vs Cash Out 46.93M =
+// −1.70M / 6 = −284k/mo NET CASH DEFICIT. Operating contribution is ~breakeven, but servicing ~12M debt + clearing
+// cheques drains cash. This plug reconciles operating profit to the ACTUAL bank cash flow → baseline opens at −284k.
+var FIN_SERVICE=392011;
+// ATTACHED REVENUE STREAMS — these ride on AHD kitchen sales (counters/appliances installed in AHD kitchens,
+// project fit-out). Ratios = each stream's H1-2026 cash-in ÷ AHD cash-in (Monthly Executive Dashboard
+// "Cash-In by Company", Jan–Jun 2026): Countertops/stone 357,170/mo = 6.58% of AHD; Appliances 282,249/mo =
+// 5.20%; Projects 70,472/mo = 1.30%. They scale WITH AHD sales (historical correlation). Café is independent
+// (own footfall, flat ~52k/mo). These are pass-through (COGS ~78-90%) → already absorbed in OTHER_OH, so they
+// add to SALES only, not to profit.
+var RS_COUNTER=0.0658, RS_APPL=0.0520, RS_PROJ=0.0130;   // share of AHD sales
+// FURNITURE / SEATING — chairs + dining + sofas, rides on AHD kitchen sales (2025 deal-register attached ratios:
+// Korsagy chairs 2.92% + Helmy dining 2.53% + YNG sofa 0.97% = 6.42% of AHD net sales).
+var RS_FURN=0.0642;                                      // share of AHD sales (chairs/dining/sofas)
+var RS_CAFE=52110;                                       // café/Esspressonalitea, independent, flat EGP/mo
+var MKT_BASE=229400;                            // measured baseline ad spend (the pipeline PDF)
+var AHD_MKT=0.785, DES_MKT=0.215;               // marketing-cost attribution by lead split (106 AHD : 29 Designy)
+// AHD — funnel-driven
+var AHD_LIST=50900, AHD_COGS=0.351, AHD_CAP=360;// list/module, material% of sales, factory capacity (modules/mo)
+var CPL=1072, MR_BASE=0.0467, M2C=0.50, REVPC=1000000; // cost/lead, lead→meas, meas→contract, revenue/contract
+// Designy — leonardo.html engine
+var DES_LIST=11200, DES_BD=0.324, DES_BV=155, DES_E=4.9, DES_CAP=700;
+// installments (cheques)
+var MARKUP=1.20, FINCOST=0.14, BOUNCE=0.04;
+var INST_NET=MARKUP*(1-FINCOST-BOUNCE);         // realized net factor on installment sales = 0.984
+// marketing RESPONSE — organic base + diminishing returns (so spend doesn't scale revenue linearly)
+//   rev/vol(spend) = baseline × [ ORG + (1-ORG) × sat(spend)/sat(229,400) ] , sat(s)=s/(s+K)
+//   • at spend=baseline → multiplier=1 (reproduces today's actuals)   • at spend=0 → only the organic share survives
+//   • each extra EGP returns less (saturation) → there is an OPTIMAL spend, not infinite profit
+var ORG_A=0.65;          // share of AHD revenue that is organic (repeat/referral/brand, persists w/o ads)
+var ORG_D=0.55;          // share of Designy volume that is organic (entry-level leans more on ads)
+var K_SAT=294943;        // saturation half-spend (EGP): marginal ROAS halves vs the very first EGP at this spend
+var REV_BASE_A=5430000;  // AHD CASH-IN at baseline 229,400 spend = 2026 actual money collected (~5.43M/mo avg
+                         // Jan–Jun 2026, Monthly Executive Dashboard "Cash-In by Company"). Cash-in (not invoiced
+                         // sales 3.73M) is the right driver per Ahmed — it's the money actually through the door,
+                         // and slightly exceeds the 5.0M funnel potential because it includes collections on prior cheque sales.
+function sat(s){return s/(s+K_SAT);}
+var SAT_BASE=sat(229400);                 // ≈0.4375
+// marketing multiplier, =1 at baseline (spend 229,400 & measurement rate 4.67%).
+//   organic share is fixed; the INCREMENTAL (paid-funnel) slice scales with BOTH spend (saturating) and the
+//   lead→measurement rate. Fixing follow-up (4.67%→7%) converts the SAME leads into ~1.5× more contracts → more
+//   revenue with no extra ad spend — that is why the measurement rate is "the biggest lever."
+function mfac(org,s,mrMult){mrMult=(mrMult==null?1:mrMult); return org+(1-org)*(sat(s)/SAT_BASE)*mrMult;}
+
+var S={spend:229400, inst:1, ddisc:32, dcogs:49, adisc:27, mr:4.67};
+
+/* ---------- helpers (from leonardo.html) ---------- */
+function $(id){return document.getElementById(id);}
+function egp(x){return Math.round(x).toLocaleString('en-US');}
+function M(x){var s=x<0?'-':'';x=Math.abs(x);
+  if(x>=1e6)return s+(x/1e6).toFixed(2)+'M';
+  if(x>=1e3)return s+Math.round(x/1e3)+'k';
+  return s+Math.round(x);}
+function volForD(disc){var v=DES_BV*(1+DES_E*(disc/100-DES_BD)); return Math.max(8,v);}
+
+/* split a base (cash) volume into cash + installment legs, apply capacity cap, return blended gross/sales/volume */
+function legs(baseVol, net, mat, mI, cap){
+  var cashV=baseVol, instV=baseVol*(mI-1);
+  var raw=cashV+instV, sc=(raw>cap)?cap/raw:1;
+  cashV*=sc; instV*=sc;
+  var instNet=net*INST_NET;
+  var gross=cashV*(net-mat)+instV*(instNet-mat);
+  var sales=cashV*net+instV*instNet;
+  return {vol:cashV+instV, gross:gross, sales:sales};
+}
+
+/* ---------- core model ---------- */
+function calc(o){
+  var spend=o.spend, mI=o.inst, mr=o.mr/100;
+  var mrMult=mr/MR_BASE;   // measurement-rate lever, =1 at the calibrated 4.67%
+  // marketing funnel — leads are real & linear (measured CPL); contracts/potential at the chosen measurement rate
+  var leads=spend/CPL, meas=leads*mr, contracts=meas*M2C, potential=contracts*REVPC;
+  // AHD revenue = organic base + saturating marketing increment (scales with spend AND measurement rate); discount = margin only
+  var ahdRev=REV_BASE_A*mfac(ORG_A,spend,mrMult);
+  var aNet=AHD_LIST*(1-o.adisc/100), aMat=aNet*AHD_COGS;
+  var aBase=ahdRev/aNet;
+  var A=legs(aBase, aNet, aMat, mI, AHD_CAP);
+  var aOH=AHD_FIX+spend*AHD_MKT, aProfit=A.gross-aOH;
+  // Designy — its 21.5% lead share: volume = elasticity demand × saturating marketing multiplier × installments
+  var dNet=DES_LIST*(1-o.ddisc/100), dMat=dNet*(o.dcogs/100);
+  var dBase=volForD(o.ddisc)*mfac(ORG_D,spend,mrMult);
+  var D=legs(dBase, dNet, dMat, mI, DES_CAP);
+  var dOH=DES_FIX+spend*DES_MKT, dProfit=D.gross-dOH;
+  // attached revenue streams — ride on AHD sales (counters/appliances/projects scale with AHD); café independent
+  var rsCounter=A.sales*RS_COUNTER, rsAppl=A.sales*RS_APPL, rsProj=A.sales*RS_PROJ, rsFurn=A.sales*RS_FURN, rsCafe=RS_CAFE;
+  var rsTotal=rsCounter+rsAppl+rsProj+rsFurn+rsCafe;
+  // group — total sales = both makers + all attached streams (ties to dashboard cash-in ~7.5M)
+  return {
+    leads:leads, meas:meas, contracts:contracts, potential:potential,
+    ahdRev:A.sales, roas:A.sales/spend,
+    aVol:A.vol, aSales:A.sales, aOH:aOH, aOHU:aOH/A.vol, aProfit:aProfit, aCap:(aBase*mI>AHD_CAP),
+    dVol:D.vol, dSales:D.sales, dOH:dOH, dOHU:dOH/D.vol, dProfit:dProfit,
+    dBE:(dNet>dMat)?dOH/(dNet-dMat):Infinity,
+    aCogsP:A.vol*aMat/A.sales, dCogsP:D.vol*dMat/D.sales,
+    avgCogsP:(A.vol*aMat+D.vol*dMat)/(A.sales+D.sales),
+    rsCounter:rsCounter, rsAppl:rsAppl, rsProj:rsProj, rsFurn:rsFurn, rsCafe:rsCafe, rsTotal:rsTotal,
+    gVol:A.vol+D.vol, gSales:A.sales+D.sales+rsTotal, gOH:aOH+dOH+OTHER_OH+FIN_SERVICE, gProfit:aProfit+dProfit-OTHER_OH-FIN_SERVICE
+  };
+}
+function gpAt(spend){var o={spend:spend,inst:S.inst,ddisc:S.ddisc,dcogs:S.dcogs,adisc:S.adisc,mr:S.mr};return calc(o).gProfit;}
+
+/* ---------- chart: group profit vs ad spend ---------- */
+function chart(){
+  var W=900,H=320,L=78,R=22,T=24,B=46, iw=W-L-R, ih=H-T-B;
+  var sMin=50000, sMax=1200000, N=80;
+  var pts=[], vals=[], peakX=sMin, peakY=-1e9;
+  for(var i=0;i<=N;i++){var sp=sMin+(sMax-sMin)*i/N, y=gpAt(sp); pts.push([sp,y]); vals.push(y); if(y>peakY){peakY=y;peakX=sp;}}
+  var yMin=Math.min.apply(null,vals), yMax=Math.max.apply(null,vals);
+  yMin=Math.min(yMin,0); yMax=Math.max(yMax,0);
+  var pad=(yMax-yMin)*0.10||1000; yMin-=pad; yMax+=pad;
+  function X(s){return L+(s-sMin)/(sMax-sMin)*iw;}
+  function Y(y){return T+(1-(y-yMin)/(yMax-yMin))*ih;}
+  var g='';
+  for(i=0;i<=4;i++){var gy=T+ih*i/4, gv=yMax-(yMax-yMin)*i/4;
+    g+='<line x1="'+L+'" y1="'+gy.toFixed(1)+'" x2="'+(W-R)+'" y2="'+gy.toFixed(1)+'" stroke="#221F1B"/>'
+      +'<text x="'+(L-8)+'" y="'+(gy+3).toFixed(1)+'" fill="#6B655B" font-size="10" text-anchor="end">'+M(gv)+'</text>';}
+  var xl='';
+  for(i=0;i<=5;i++){var xv=sMin+(sMax-sMin)*i/5;
+    xl+='<text x="'+X(xv).toFixed(1)+'" y="'+(H-B+18)+'" fill="#6B655B" font-size="10" text-anchor="middle">'+M(xv)+'</text>';}
+  xl+='<text x="'+((L+W-R)/2)+'" y="'+(H-4)+'" fill="#8A8170" font-size="10.5" text-anchor="middle">marketing / ad spend per month</text>';
+  var zy=Y(0);
+  var zero='<line x1="'+L+'" y1="'+zy.toFixed(1)+'" x2="'+(W-R)+'" y2="'+zy.toFixed(1)+'" stroke="#74B27F" stroke-width="1.6"/>'
+    +'<text x="'+(L+6)+'" y="'+(zy-6).toFixed(1)+'" fill="#74B27F" font-size="10.5">break-even (0)</text>';
+  function path(p){var s='';for(var j=0;j<p.length;j++){s+=(j?'L':'M')+X(p[j][0]).toFixed(1)+' '+Y(p[j][1]).toFixed(1);}return s;}
+  var cMain='<path d="'+path(pts)+'" fill="none" stroke="#C9A86A" stroke-width="2.6"/>';
+  // baseline marker (229,400)
+  var bx=X(MKT_BASE);
+  var base='<line x1="'+bx.toFixed(1)+'" y1="'+T+'" x2="'+bx.toFixed(1)+'" y2="'+(H-B)+'" stroke="#3a3630" stroke-width="1" stroke-dasharray="2 3"/>'
+    +'<text x="'+(bx+4).toFixed(1)+'" y="'+(T+11)+'" fill="#6B655B" font-size="9.5">today 229k</text>';
+  // optimal-spend marker (peak of the curve)
+  var px=X(peakX), pk='';
+  if(peakX>sMin+1 && peakX<sMax-1){
+    pk='<line x1="'+px.toFixed(1)+'" y1="'+T+'" x2="'+px.toFixed(1)+'" y2="'+(H-B)+'" stroke="#74B27F" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>'
+      +'<text x="'+(px+4).toFixed(1)+'" y="'+(T+11)+'" fill="#74B27F" font-size="9.5">best ~'+M(peakX)+'</text>';
+  }
+  base+=pk;
+  // current dot
+  var gy0=gpAt(S.spend), cx=X(S.spend), cy=Y(gy0);
+  var lft=S.spend>500000;
+  var cur='<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="5.5" fill="#C9A86A" stroke="#0E0E0E" stroke-width="1.5"/>'
+    +'<text x="'+(cx+(lft?-9:9)).toFixed(1)+'" y="'+(cy-10).toFixed(1)+'" fill="#F3EFE6" font-size="11" text-anchor="'+(lft?'end':'start')+'">spend '+M(S.spend)+' &rarr; group '+M(gy0)+'/mo</text>';
+  $('chart').innerHTML='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto">'+g+xl+zero+base+cMain+cur+'</svg>';
+}
+
+/* ---------- render ---------- */
+function setProfit(el,v){el.textContent=(v>=0?'+':'')+M(v);el.className='b '+(v>=0?'pos':'neg');el.classList.remove('b');el.classList.add(v>=0?'pos':'neg');}
+function render(){
+  S.spend=+$('sSpend').value; S.inst=+$('sInst').value; S.ddisc=+$('sDdisc').value;
+  S.dcogs=+$('sDcogs').value; S.adisc=+$('sAdisc').value; S.mr=+$('sMr').value;
+  $('vSpend').textContent=egp(S.spend); $('vInst').textContent=S.inst.toFixed(1);
+  $('vDdisc').textContent=S.ddisc; $('vDcogs').textContent=S.dcogs;
+  $('vAdisc').textContent=S.adisc; $('vMr').textContent=S.mr.toFixed(2);
+  var c=calc(S);
+  // funnel
+  $('fSpend').textContent=M(S.spend);
+  $('fLeads').textContent=egp(c.leads);
+  $('fMeas').textContent=c.meas.toFixed(1); $('fMeasS').textContent='@ '+S.mr.toFixed(2)+'%';
+  $('fCon').textContent=c.contracts.toFixed(1);
+  $('fRev').textContent=M(c.ahdRev);
+  $('fRevS').textContent='realized · potential '+M(c.potential);
+  $('fRoas').textContent=c.roas.toFixed(1)+'×';
+  var leak=c.potential-c.ahdRev;
+  $('fCapNote').textContent=(leak>200000)?('  · '+M(leak)+' of pipeline potential not converting — diminishing returns / follow-up leak'):'';
+  // AHD
+  $('aVol').textContent=Math.round(c.aVol);
+  $('aSales').textContent=M(c.aSales);
+  $('aOH').textContent=M(c.aOH);
+  $('aOHU').textContent=egp(c.aOHU);
+  $('aProfit').textContent=(c.aProfit>=0?'+':'')+M(c.aProfit); $('aProfit').className=c.aProfit>=0?'pos':'neg';
+  $('aProfit').style.color=c.aProfit>=0?'var(--green)':'var(--red)';
+  // Designy
+  $('dVol').textContent=Math.round(c.dVol);
+  $('dSales').textContent=M(c.dSales);
+  $('dOH').textContent=M(c.dOH);
+  $('dOHU').textContent=egp(c.dOHU);
+  (function(){var be=c.dBE, vol=c.dVol, el=$('dBE');
+    if(!isFinite(be)){el.textContent='—'; el.style.color='var(--red)';}
+    else{var gap=Math.round(be-vol);
+      el.textContent=Math.round(be)+(gap>0?(' ( +'+gap+' to break even)'):(gap<0?(' ( '+gap+' below, in profit)'):' (at break-even)'));
+      el.style.color=(vol>=be)?'var(--green)':'var(--cream)';}
+  })();
+  $('dProfit').textContent=(c.dProfit>=0?'+':'')+M(c.dProfit);
+  $('dProfit').style.color=c.dProfit>=0?'var(--green)':'var(--red)';
+  // attached revenue streams
+  $('rsAhd').textContent=M(c.aSales);
+  $('rsDes').textContent=M(c.dSales);
+  $('rsCounter').textContent=M(c.rsCounter);
+  $('rsAppl').textContent=M(c.rsAppl);
+  $('rsFurn').textContent=M(c.rsFurn);
+  $('rsProj').textContent=M(c.rsProj);
+  $('rsCafe').textContent=M(c.rsCafe);
+  $('rsTotal').textContent=M(c.aSales+c.dSales+c.rsTotal);
+  // group
+  $('gVol').textContent=Math.round(c.gVol);
+  $('gSales').textContent=M(c.gSales);
+  $('gOH').textContent=M(c.gOH);
+  $('gProfit').textContent=(c.gProfit>=0?'+':'')+M(c.gProfit);
+  $('gProfit').style.color=c.gProfit>=0?'var(--green)':'var(--red)';
+  $('gpBox').className='gprofit '+(c.gProfit>=0?'pos':'neg');
+  $('gProfitS').textContent=c.gProfit>=0?'net cash, after ALL overhead + marketing + financing':'today&rsquo;s real cash state &mdash; a deficit (ties to dashboard &minus;284k/mo; dials show the way out)';
+  // sticky live-results bar
+  $('tbG').textContent=(c.gProfit>=0?'+':'')+M(c.gProfit); $('tbG').style.color=c.gProfit>=0?'var(--green)':'var(--red)';
+  $('tbS').textContent=M(c.gSales);
+  $('tbVol').textContent=Math.round(c.gVol);
+  $('tbVolBd').textContent='AHD '+Math.round(c.aVol)+' · Des '+Math.round(c.dVol);
+  $('tbOH').textContent=M(c.gOH);
+  $('tbAOHU').textContent=egp(c.aOHU);
+  $('tbDOHU').textContent=egp(c.dOHU);
+  $('tbACOGS').textContent=(c.aCogsP*100).toFixed(1)+'%';
+  $('tbDCOGS').textContent=(c.dCogsP*100).toFixed(1)+'%';
+  $('tbAVGCOGS').textContent=(c.avgCogsP*100).toFixed(1)+'%';
+  $('tbA').textContent=(c.aProfit>=0?'+':'')+M(c.aProfit); $('tbA').style.color=c.aProfit>=0?'var(--green)':'var(--red)';
+  $('tbD').textContent=(c.dProfit>=0?'+':'')+M(c.dProfit); $('tbD').style.color=c.dProfit>=0?'var(--green)':'var(--red)';
+  $('tbSpend').textContent=M(S.spend);
+  var opt=findOpt();
+  $('tbBest').textContent='best ~'+M(opt.spend);
+  chart();
+  note(c);
+}
+
+function findOpt(){var best=-1e9,bx=50000; for(var s=50000;s<=1200000;s+=5000){var g=gpAt(s); if(g>best){best=g;bx=s;}} return {spend:bx,profit:best};}
+function note(c){
+  var base=calc({spend:MKT_BASE,inst:S.inst,ddisc:S.ddisc,dcogs:S.dcogs,adisc:S.adisc,mr:S.mr});
+  var opt=findOpt();
+  var n='At <b>'+M(S.spend)+'</b> ad spend the pipeline generates <b>'+egp(c.leads)+' leads</b> (potential <b>'+M(c.potential)+'</b>); AHD collects <b class="gold">'+M(c.ahdRev)+'</b> cash-in (ROAS <b>'+c.roas.toFixed(1)+'×</b>). ';
+  n+='AHD operations run <b class="'+(c.aProfit>=0?'pos':'neg')+'">'+(c.aProfit>=0?'+':'')+M(c.aProfit)+'/mo</b>, Designy <b class="'+(c.dProfit>=0?'pos':'neg')+'">'+(c.dProfit>=0?'+':'')+M(c.dProfit)+'/mo</b>; after resale/café overhead and <b>financing &amp; debt service</b> ('+M(FIN_SERVICE)+'/mo), '
+    +'the group nets <b class="'+(c.gProfit>=0?'pos':'neg')+'">'+(c.gProfit>=0?'+':'')+M(c.gProfit)+'/month</b>.';
+  // marketing direction — now with diminishing returns and an optimum
+  n+='<br><br><b>Why it doesn&rsquo;t FEEL profitable:</b> on the cash-flow budget the company is <b class="neg">cash-negative</b> &mdash; H1 2026 Cash In 45.2M vs Cash Out 46.9M = <b class="neg">&minus;1.70M</b> over 6 months (&minus;284k/mo). AHD&rsquo;s factory operations actually earn money, but ~12M of debt + cheque clearances drain it back out. ';
+  n+='Marketing is an investment with <b>diminishing returns</b>, not a linear money-printer. '
+    +'Your AHD base (2026 actual ~5.43M cash collected/mo, dashboard "Cash-In by Company") is mostly <b>organic</b> (repeat, referral, brand &mdash; '+Math.round(ORG_A*100)+'% holds even with no ads); ad spend buys an <b>incremental</b> slice that gets harder to grow as audiences saturate and leads pile up unprocessed. ';
+  if(S.spend>MKT_BASE) n+='You have pushed spend <b>above</b> today&rsquo;s 229k: group profit moved <b class="'+(c.gProfit>=base.gProfit?'pos':'neg')+'">'+(c.gProfit>=base.gProfit?'+':'')+M(c.gProfit-base.gProfit)+'/mo</b> &mdash; notice ROAS has already fallen to '+c.roas.toFixed(1)+'× (it was '+base.roas.toFixed(1)+'× at baseline).';
+  else if(S.spend<MKT_BASE) n+='You have pulled spend <b>below</b> 229k: group profit moved <b class="neg">'+M(c.gProfit-base.gProfit)+'/mo</b> &mdash; cutting ads starves the incremental funnel.';
+  else n+='This is today&rsquo;s baseline (229k → '+M(c.ahdRev)+' AHD cash-in, ROAS '+c.roas.toFixed(1)+'×) &mdash; the real 2026 state: a <b class="neg">'+M(c.gProfit)+'/mo</b> cash deficit (ties to the dashboard&rsquo;s &minus;1.70M H1 cash flow).';
+  n+=' <b>The marketing sweet spot is around <span class="gold">'+M(opt.spend)+'/mo</span></b> (group <b class="'+(opt.profit>=0?'pos':'neg')+'">'+(opt.profit>=0?'+':'')+M(opt.profit)+'/mo</b>); spending past it adds cost faster than cash collected &mdash; the curve turns <b>down</b>, not up. '
+    +(opt.profit<0?'Even at the best ad spend the group stays <b>in the red</b> &mdash; marketing alone can&rsquo;t fix it; you also need <b>volume</b> (cheques/installments) and <b>cost</b> (material %, discount discipline).':'Push spend toward that point and the cash deficit flips to a surplus &mdash; then stack <b>cheques/installments</b> and <b>cost discipline</b> on top.');
+  // installments
+  if(S.inst>1){
+    n+='<br><br><b>Installments (×'+S.inst.toFixed(1)+'):</b> offering cheques multiplies volume and, with the 20% markup net of 14% financing + 4% bounce, '
+      +'lifts Designy to <b class="'+(c.dProfit>=0?'pos':'neg')+'">'+(c.dProfit>=0?'+':'')+M(c.dProfit)+'/mo</b> '
+      +(c.dProfit>=0?'&mdash; the structural loss flips to profit because the fixed overhead spreads over far more modules.':'&mdash; narrowing the loss as volume climbs.');
+  } else {
+    n+='<br><br><b>Installments are off (×1).</b> Turn the cheques dial up: at ×4 Designy&rsquo;s fixed overhead spreads across ~4× the modules and the brand flips from loss to profit.';
+  }
+  n+='<br><br><b>Overhead/unit is the quiet hero:</b> AHD&rsquo;s fixed overhead is '+M(AHD_FIX)+' and Designy&rsquo;s '+M(DES_FIX)+' &mdash; both <b>fixed</b>. '
+    +'Right now that is <b>'+egp(c.aOHU)+'</b>/AHD-module and <b>'+egp(c.dOHU)+'</b>/Designy-module; sell more units (via marketing or cheques) and those numbers fall, lifting every line below them.';
+  $('note').innerHTML=n;
+}
+
+$('foot').innerHTML='Marketing funnel (measured): leads = spend ÷ 1,072 · measurements = leads × 4.67% · contracts = measurements × 50% · pipeline potential = contracts × 1,000,000. '
+  +'Marketing RESPONSE (diminishing returns): AHD cash-in = 5,430,000 × [0.65 + 0.35 × sat(spend)/sat(229,400)], where sat(s) = s ÷ (s + 294,943). The 5.43M is the 2026 actual cash collected/mo (Monthly Executive Dashboard "Cash-In by Company", avg Jan–Jun 2026) — money through the door, not invoiced sales (3.73M); it slightly exceeds the 5.0M funnel potential because it includes collections on prior cheque sales. '
+  +'So 65% of AHD cash-in is organic (survives with no ads) and the marketing-driven slice saturates — at 2× spend cash-in rises ~14%, not 100%, and ROAS falls from ~24× as you spend more. '
+  +'AHD net/module = 50,900 × (1 − discount); contribution = 65% of cash-in (COGS 35.1%); volume = cash-in ÷ net (capacity '+AHD_CAP+' modules). '
+  +'Designy volume = 155 × (1 + 4.9 × (discount − 32.4%)) × [0.55 + 0.45 × sat(spend)/sat(229,400)] × installment legs — its 21.5% lead share, also with diminishing returns; net = 11,200 × (1 − discount); contribution = net − material%. '
+  +'Installment sales: net × 1.20 × (1 − 0.14 − 0.04) = ×0.984 realized, material costed on cash-equivalent, 0% down. '
+  +'Overhead (whole-company, cash-flow budget ex-tax): the group carries ~4,124,604/mo of operating overhead; minus marketing 348,861 = 3,775,743 fixed, ALL of it charged to the two makers because resale & café are pass-through (COGS ~78–90% → near-zero net contribution, they cannot fund overhead). AHD bears 2,248,720, Designy 894,284, and the remaining 632,739 (resale/café direct + residual corporate) is absorbed at group level. Marketing is added back as the ad-spend dial, attributed 78.5% AHD / 21.5% Designy. '
+  +'FINANCING &amp; DEBT SERVICE: a further '+M(FIN_SERVICE)+'/mo reconciles operating profit to the ACTUAL bank cash flow. The dashboard shows H1 2026 Cash In 45.23M vs Cash Out 46.93M = −1.70M over 6 months (−284k/mo): operations roughly break even, but servicing ~12M of debt + clearing cheques drains the rest. '
+  +'So the group opens at TODAY&rsquo;S real cash state (≈ −284k/mo, matching the dashboard), and the dials show what it takes to climb out. Organic share (65%/55%), saturation (294,943) and the financing line are the key tunable assumptions. A decision aid, not management accounts.';
+
+/* ---------- recommended scenario (the "ideal" ghost markers) ---------- */
+// Defensible targets (deliberately CONSERVATIVE so the headline stays credible):
+//   • spend = the diminishing-returns sweet spot (interior optimum, computed below ≈726k)
+//   • Designy material 49→40% (real cost target, ~+130k)   • hold discounts (AHD discount is ~profit-neutral
+//     here since revenue is marketing-driven, E≈0)   • installments LEFT AT ×1 on purpose: the model treats the
+//     cheque multiplier as net-new volume (optimistic), so we don't bank on it — slide it up to see the upside.
+//   • follow-up 4.67→7% (operational lever; lifts the funnel readout). Net result ≈ −283k → +291k/mo.
+var REC={inst:1, ddisc:32, dcogs:40, adisc:15, mr:7, spend:229400};
+(function(){var best=-1e9,bx=229400;
+  for(var s=50000;s<=1200000;s+=2000){
+    var g=calc({spend:s,inst:REC.inst,ddisc:REC.ddisc,dcogs:REC.dcogs,adisc:REC.adisc,mr:REC.mr}).gProfit;
+    if(g>best){best=g;bx=s;}
+  } REC.spend=Math.round(bx/1000)*1000; REC.profit=best;})();
+
+function placeRec(){
+  var map=[['sSpend','gSpend','rSpend',REC.spend,'M'],['sInst','gInst','rInst',REC.inst,'x'],
+           ['sDdisc','gDdisc','rDdisc',REC.ddisc,'%'],['sDcogs','gDcogs','rDcogs',REC.dcogs,'%'],
+           ['sAdisc','gAdisc','rAdisc',REC.adisc,'%'],['sMr','gMr','rMr',REC.mr,'%']];
+  map.forEach(function(m){var el=$(m[0]),min=+el.min,max=+el.max,val=m[3];
+    var pct=Math.max(0,Math.min(100,(val-min)/(max-min)*100));
+    $(m[1]).style.left=pct+'%';
+    var lbl=(m[4]==='M')?('rec '+M(val)):(m[4]==='x')?('rec ×'+val.toFixed(1)):('rec '+val+'%');
+    $(m[2]).textContent=lbl; $(m[2]).title='Recommended '+lbl.slice(4);
+  });
+}
+placeRec();
+$('recBtn').addEventListener('click',function(){
+  $('sSpend').value=REC.spend; $('sInst').value=REC.inst; $('sDdisc').value=REC.ddisc;
+  $('sDcogs').value=REC.dcogs; $('sAdisc').value=REC.adisc; $('sMr').value=REC.mr; render();
+});
+
+['sSpend','sInst','sDdisc','sDcogs','sAdisc','sMr'].forEach(function(id){$(id).addEventListener('input',render);});
+render();
+</script>
+</body>
+</html>
